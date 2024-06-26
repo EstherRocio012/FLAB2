@@ -6,16 +6,26 @@ import ImageCard from '../../components/ImageCard'
 import TextRegular from '../../components/TextRegular'
 import TextSemiBold from '../../components/TextSemibold'
 import * as GlobalStyles from '../../styles/GlobalStyles'
-
+import { showMessage } from 'react-native-flash-message'
+import defaultProductImage from '../../../assets/product.jpeg'
 export default function RestaurantDetailScreen ({ route }) {
   const [restaurant, setRestaurant] = useState({})
 
   useEffect(() => {
-    console.log('Loading restaurant details, please wait 1 second')
-    setTimeout(() => {
-      setRestaurant(getDetail(route.params.id))
-      console.log('Restaurant details loaded')
-    }, 1000)
+    async function fetchRestaurantDetail () {
+      try {
+        const fetchedRestaurants = await getDetail(route.params.id)
+        setRestaurant(fetchedRestaurants)
+      } catch (err) {
+        showMessage({
+          message: `There was an error while retrieving restaurant details (id ${route.params.id}). ${err}`,
+          type: 'error',
+          style: GlobalStyles.flashStyle,
+          titleStyle: GlobalStyles.flashStyle
+        })
+      }
+    }
+    fetchRestaurantDetail()
   }, [])
 
   const renderHeader = () => {
@@ -42,6 +52,14 @@ export default function RestaurantDetailScreen ({ route }) {
           <TextRegular textStyle={styles.availability }>Not available</TextRegular>
         }
       </ImageCard>
+    )
+  }
+
+  const renderEmptyProductsList = () => {
+    return (
+        <TextRegular textStyle = { styles.emptyList}>
+          This restaurant has no products yet
+        </TextRegular>
     )
   }
 
@@ -95,5 +113,5 @@ const styles = StyleSheet.create({
     textAlign: 'right',
     marginRight: 5,
     color: GlobalStyles.brandSecondary
-  },
+  }
 })

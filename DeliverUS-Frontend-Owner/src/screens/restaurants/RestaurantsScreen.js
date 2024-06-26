@@ -8,18 +8,33 @@ import TextRegular from '../../components/TextRegular'
 
 import * as GlobalStyles from '../../styles/GlobalStyles'
 import restaurantLogo from '../../../assets/restaurantLogo.jpeg'
-
+import AuthorizationContext from '../../context/AuthorizationContext'
+import { showMessage } from 'react-native-flash-message'
 
 export default function RestaurantsScreen ({ navigation }) {
   const [restaurants, setRestaurants] = useState([])
+  const { loggedInUser } = useContext(AuthorizationContext)
 
   useEffect(() => {
-    console.log('Loading restaurants, please wait 1 second')
-    setTimeout(() => {
-      setRestaurants(getAll) // getAll function has to be imported
-      console.log('Restaurants loaded')
-    }, 1000)
-  }, [])
+    async function fetchRestaurants () {
+      try {
+        const fetchedRestaurants = await getAll()
+        setRestaurants(fetchedRestaurants)
+      } catch (err) {
+        showMessage({
+          message: `There was an error while retrieving restaurants. ${err}`,
+          type: 'error',
+          style: GlobalStyles.flashStyle,
+          titleStyle: GlobalStyles.flashStyle
+        })
+      }
+    }
+    if (loggedInUser) {
+      fetchRestaurants()
+    } else {
+      setRestaurants(null)
+    }
+  }, [loggedInUser])
 
   const renderRestaurant = ({ item }) => {
     return (
@@ -36,6 +51,14 @@ export default function RestaurantsScreen ({ navigation }) {
         }
         <TextSemiBold>Shipping: <TextSemiBold textStyle={{ color: GlobalStyles.brandPrimary }}>{item.shippingCosts.toFixed(2)}€</TextSemiBold></TextSemiBold>
       </ImageCard>
+    )
+  }
+
+  const renderEmptyRestaurantsList = () => {
+    return (
+        <TextRegular textStyle={styles.emptyList}>
+          No restaurants were retreived. Are you logged in?
+        </TextRegular>
     )
   }
 
